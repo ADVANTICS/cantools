@@ -21,7 +21,7 @@ class UnsupportedDatabaseFormatError(Error):
 
     """
 
-    def __init__(self, e_arxml, e_dbc, e_kcd, e_sym, e_cdd):
+    def __init__(self, e_arxml, e_dbc, e_kcd, e_sym, e_cdd, e_dej):
         message = []
 
         if e_arxml is not None:
@@ -38,6 +38,9 @@ class UnsupportedDatabaseFormatError(Error):
 
         if e_cdd is not None:
             message.append('CDD: "{}"'.format(e_cdd))
+
+        if e_dej is not None:
+            message.append('ODJ: "{}"'.format(e_dej))
 
         message = ', '.join(message)
 
@@ -121,6 +124,8 @@ def load_file(filename,
     +-----------+-----------------+
     | .cdd      | ``'cdd'``       |
     +-----------+-----------------+
+    | .ODJ      | ``'Odin'``      |
+    +-----------+-----------------+
     | <unknown> | ``None``        |
     +-----------+-----------------+
 
@@ -141,6 +146,8 @@ def load_file(filename,
     | ``'sym'``       | ``'cp1252'``      |
     +-----------------+-------------------+
     | ``'cdd'``       | ``'utf-8'``       |
+    +-----------------+-------------------+
+    | ``'Odin'``      | ``'utf-8'``       |
     +-----------------+-------------------+
     | ``None``        | ``'utf-8'``       |
     +-----------------+-------------------+
@@ -283,9 +290,9 @@ def load_string(string,
 
     """
 
-    if database_format not in ['arxml', 'dbc', 'kcd', 'sym', 'cdd', None]:
+    if database_format not in ['arxml', 'dbc', 'kcd', 'sym', 'cdd', 'dej', None]:
         raise ValueError(
-            "expected database format 'arxml', 'dbc', 'kcd', 'sym', 'cdd' or "
+            "expected database format 'arxml', 'dbc', 'kcd', 'sym', 'cdd', 'dej' or "
             "None, but got '{}'".format(database_format))
 
     e_arxml = None
@@ -293,6 +300,7 @@ def load_string(string,
     e_kcd = None
     e_sym = None
     e_cdd = None
+    e_dej = None
 
     def load_can_database(fmt):
         db = can.Database(frame_id_mask=frame_id_mask,
@@ -306,6 +314,8 @@ def load_string(string,
             db.add_kcd_string(string)
         elif fmt == 'sym':
             db.add_sym_string(string)
+        elif fmt == 'dej':
+            db.add_dej_string(string)
 
         return db
 
@@ -333,6 +343,12 @@ def load_string(string,
         except ParseError as e:
             e_sym = e
 
+    if database_format in ['dej', None]:
+        try:
+            return load_can_database('dej')
+        except ParseError as e:
+            e_dej = e
+
     if database_format in ['cdd', None]:
         try:
             db = diagnostics.Database()
@@ -341,4 +357,4 @@ def load_string(string,
         except (ElementTree.ParseError, ValueError) as e:
             e_cdd = e
 
-    raise UnsupportedDatabaseFormatError(e_arxml, e_dbc, e_kcd, e_sym, e_cdd)
+    raise UnsupportedDatabaseFormatError(e_arxml, e_dbc, e_kcd, e_sym, e_cdd, e_dej)

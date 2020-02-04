@@ -431,26 +431,29 @@ def dump_string(database):
     """Format given database in KCD file format.
 
     """
+    import traceback
+    try:
+        node_refs = {}
 
-    node_refs = {}
+        attrib = {
+            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+            'xmlns': 'http://kayak.2codeornot2code.org/1.0',
+            'xsi:noNamespaceSchemaLocation': 'Definition.xsd'
+        }
+        network_definition = Element('NetworkDefinition', attrib)
 
-    attrib = {
-        'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-        'xmlns': 'http://kayak.2codeornot2code.org/1.0',
-        'xsi:noNamespaceSchemaLocation': 'Definition.xsd'
-    }
-    network_definition = Element('NetworkDefinition', attrib)
+        _dump_version(database.version, network_definition)
+        _dump_nodes(database.nodes, node_refs, network_definition)
+        _dump_messages(database.messages, node_refs, network_definition)
 
-    _dump_version(database.version, network_definition)
-    _dump_nodes(database.nodes, node_refs, network_definition)
-    _dump_messages(database.messages, node_refs, network_definition)
+        _indent_xml(network_definition, '  ')
 
-    _indent_xml(network_definition, '  ')
-
-    if sys.version_info[0] > 2:
-        return ElementTree.tostring(network_definition, encoding='unicode')
-    else:
-        return ElementTree.tostring(network_definition)
+        if sys.version_info[0] > 2:
+            return ElementTree.tostring(network_definition, encoding='unicode')
+        else:
+            return ElementTree.tostring(network_definition)
+    except Exception:
+        print(traceback.format_exc())
 
 
 def load_string(string, strict=True):

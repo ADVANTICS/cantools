@@ -4,6 +4,7 @@ from .formats import arxml
 from .formats import dbc
 from .formats import kcd
 from .formats import sym
+from .formats import odin as dej
 from .internal_database import InternalDatabase
 from ...compat import fopen
 
@@ -172,6 +173,25 @@ class Database(object):
 
         database = dbc.load_string(string, self._strict)
 
+        self._messages += database.messages
+        self._nodes = database.nodes
+        self._buses = database.buses
+        self._version = database.version
+        self._dbc = database.dbc
+        self.refresh()
+
+    def add_dej_string(self, string):
+        """Parse given ODJ data string and add the parsed data to the
+        database.
+
+        >>> db = cantools.database.Database()
+        >>> with open ('foo.dej', 'r') as fin:
+        ...     db.add_dej_string(fin.read())
+
+        """
+
+        database = dej.load_string(string, self._strict)
+        
         self._messages += database.messages
         self._nodes = database.nodes
         self._buses = database.buses
